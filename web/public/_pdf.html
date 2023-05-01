@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lecture Hall Bookings</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #f5f5f5;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-top: 50px;
+    }
+    
+    #bookings {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 50px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .booking {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      margin: 20px;
+      padding: 20px;
+      text-align: center;
+      transition: box-shadow 0.3s ease-in-out;
+    }
+    
+    .booking:hover {
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .booking-info {
+      margin-bottom: 20px;
+    }
+    
+    .booking-label {
+      font-weight: bold;
+      display: inline-block;
+      width: 120px;
+      margin-right: 10px;
+    }
+    
+    .booking-value {
+      display: inline-block;
+    }
+    
+    .booking-link {
+      color: #333;
+      display: block;
+      font-size: 24px;
+      margin-top: 20px;
+      text-decoration: none;
+      transition: color 0.3s ease-in-out;
+    }
+    
+    .booking-link:hover {
+      color: #2c3e50;
+    }
+    
+    .loader {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 5px solid #ccc;
+      border-top-color: #333;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Lecture Hall Bookings</h1>
+  <div id="bookings">
+    <div class="loader"></div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    const API_URL = "http://localhost:5004";
+    $(document).ready(async () => {
+      try {
+        // Get the three most recent bookings
+        const bookings = await $.get(`${API_URL}/bookings`);
+    
+        // Clear the loader and create the table
+        $('#bookings').empty().append('<table><thead><tr><th>LH name</th><th>Teacher</th><th>Date</th><th>Description</th><th>Course name</th><th>PDF Download</th></tr></thead><tbody></tbody></table>');
+    
+        // Loop through each booking
+        for (const booking of bookings) {
+          // Get the PDF file for the booking
+          const pdfData = await $.ajax({
+            url: `${API_URL}/pdf/${booking._id}`,
+            method: "GET",
+            xhrFields: {
+              responseType: "blob"
+            }
+          });
+    
+          // Create a blob URL for the PDF file
+          const url = URL.createObjectURL(pdfData);
+    
+          // Create the row for the current booking
+          const row = $('<tr>');
+    
+          // Add columns for each piece of data
+          const lhNameCol = $('<td>', { text: booking.lh });
+          const teacherCol = $('<td>', { text: booking.teacherName });
+          const dateCol = $('<td>', { text: new Date(booking.createdDate).toLocaleDateString() });
+          const descriptionCol = $('<td>', { text: booking.explanation });
+          const courseNameCol = $('<td>', { text: booking.course });
+          const pdfDownloadCol = $('<td>').append($('<a>', { class: 'booking-link', href: url, text: 'Download PDF' }));
+    
+          // Append columns to the row
+          row.append(lhNameCol, teacherCol, dateCol, descriptionCol, courseNameCol, pdfDownloadCol);
+    
+          // Add the row to the table
+          $('#bookings table tbody').append(row);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    
+  </script>
+  <button onclick="location.href='/student';">Back to Student Page</button>
+  </body>
+  </html>        
